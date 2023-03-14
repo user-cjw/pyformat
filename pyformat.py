@@ -38,6 +38,7 @@ from add_trailing_comma._main import _fix_src as add_trailing_comma_to_code
 import autoflake
 import autopep8
 import docformatter
+import inspect
 import isort
 import unify
 
@@ -66,7 +67,12 @@ def formatters(aggressive, apply_config, filename='',
             [filename], apply_config=apply_config)
 
     yield lambda code: autopep8.fix_code(code, options=autopep8_options)
-    yield docformatter.format_code
+    if any(x[0]=='Formatter' for x in inspect.getmembers(docformatter)):
+        configurator = docformatter.Configurater(["docformatter","-"])
+        configurator.do_parse_arguments()
+        yield docformatter.Formatter(configurator.args, None, None, None)._do_format_code
+    else:
+        yield docformatter.format_code
     yield unify.format_code
     if sort_imports:
         yield _format_by_isort
